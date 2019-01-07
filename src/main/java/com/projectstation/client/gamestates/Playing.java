@@ -32,6 +32,7 @@ import com.jevaengine.spacestation.ui.playing.PlayingWindowFactory;
 import com.jevaengine.spacestation.ui.playing.PlayingWindowFactory.PlayingWindow;
 import com.jevaengine.spacestation.ui.playing.WorldInteractionBehaviorInjector;
 import com.projectstation.client.network.WorldClient;
+import com.projectstation.client.network.entity.interaction.DoorInteractionHandler;
 import com.projectstation.network.command.server.ServerWorldVisit;
 import com.projectstation.network.command.world.SetEntityVelocityCommand;
 import io.github.jevaengine.audio.IAudioClipFactory;
@@ -100,7 +101,8 @@ public class Playing implements IState {
 	private WorldInteractionBehaviorInjector.IInteractionHandler[] createInteractionHandlers() {
 		LemDisplayFactory lemDisplayFactory = new LemDisplayFactory(m_context.getWindowManager(), m_windowFactory, LEM_DISPLAY_WINDOW);
 		return new WorldInteractionBehaviorInjector.IInteractionHandler[] {
-				new ConsoleInterfaceInteractionHandler(lemDisplayFactory)
+				new ConsoleInterfaceInteractionHandler(lemDisplayFactory),
+				new DoorInteractionHandler(m_client)
 		};
 
 	}

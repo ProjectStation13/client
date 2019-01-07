@@ -1,5 +1,6 @@
 package com.projectstation.client.network.entity;
 
+import com.projectstation.network.IServerVisit;
 import com.projectstation.network.WorldVisit;
 import com.projectstation.network.entity.EntityConfigurationDetails;
 import com.projectstation.network.entity.EntityNetworkAdapterException;
@@ -12,15 +13,15 @@ import io.github.jevaengine.world.steering.ISteeringBehavior;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SimpleEntityNetworkAdapterFactory implements IEntityNetworkAdapterFactory {
+public class SimpleEntityNetworkAdapterFactory implements IEntityNetworkAdapterFactory<IClientEntityNetworkAdapter, IEntity> {
 
     @Override
-    public IEntityNetworkAdapter create(IEntity e, EntityConfigurationDetails config, IEntityNetworlAdapterHost pr) {
+    public IClientEntityNetworkAdapter create(IEntity e, EntityConfigurationDetails config, IEntityNetworlAdapterHost pr) {
         return new SimpleEntityNetworkAdapter(e, config, pr);
     }
 }
 
-class SimpleEntityNetworkAdapter implements IEntityNetworkAdapter {
+class SimpleEntityNetworkAdapter implements IClientEntityNetworkAdapter {
     private final IEntity entity;
     private final EntityConfigurationDetails config;
 
@@ -35,9 +36,8 @@ class SimpleEntityNetworkAdapter implements IEntityNetworkAdapter {
     }
 
     @Override
-    public List<WorldVisit> pollDelta(int deltaTime) throws EntityNetworkAdapterException {
-        List<WorldVisit> response = new ArrayList<>();
-        return response;
+    public List<IServerVisit> poll(int deltaTime) {
+        return new ArrayList<>();
     }
 
     @Override

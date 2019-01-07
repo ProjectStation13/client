@@ -25,6 +25,7 @@ import io.github.jevaengine.FutureResult;
 import io.github.jevaengine.IInitializationMonitor;
 import io.github.jevaengine.audio.IAudioClipFactory;
 import io.github.jevaengine.graphics.ISpriteFactory;
+import io.github.jevaengine.rpg.entity.character.IRpgCharacter;
 import io.github.jevaengine.ui.*;
 import io.github.jevaengine.ui.IWindowFactory.WindowConstructionException;
 import io.github.jevaengine.world.IEffectMapFactory;
@@ -114,7 +115,8 @@ public class SynchronizeWithServer implements IState
 	public void update(int iDelta)
 	{
 		client.update(iDelta);
-		if(client.getWorld() != null && client.getPlayerEntity() != null)
+		if(client.getWorld() != null && client.getPlayerEntity() != null &&
+				client.getWorld().getEntities().getByName(IRpgCharacter.class, client.getPlayerEntity()) != null)
 		{
 			m_handler.done(client, client.getPlayerEntity(), client.getWorld());
 		}

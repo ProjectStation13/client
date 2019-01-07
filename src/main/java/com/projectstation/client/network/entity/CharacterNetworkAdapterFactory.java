@@ -1,6 +1,8 @@
 package com.projectstation.client.network.entity;
 
+import com.projectstation.network.IServerVisit;
 import com.projectstation.network.WorldVisit;
+import com.projectstation.network.command.server.ServerWorldVisit;
 import com.projectstation.network.command.world.SetEntityVelocityCommand;
 import com.projectstation.network.entity.EntityConfigurationDetails;
 import com.projectstation.network.entity.EntityNetworkAdapterException;
@@ -16,18 +18,15 @@ import io.github.jevaengine.world.steering.ISteeringBehavior;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CharacterNetworkAdapterFactory implements IEntityNetworkAdapterFactory {
+public class CharacterNetworkAdapterFactory implements IEntityNetworkAdapterFactory<IClientEntityNetworkAdapter, IRpgCharacter> {
 
     @Override
-    public IEntityNetworkAdapter create(IEntity e, EntityConfigurationDetails config, IEntityNetworlAdapterHost pr) {
-        if(!(e instanceof IRpgCharacter))
-            throw new RuntimeException("Network adapter is only compatible with character implementations.");
-
-        return new CharacterNetworkAdapter((IRpgCharacter)e, config, pr);
+    public IClientEntityNetworkAdapter create(IRpgCharacter e, EntityConfigurationDetails config, IEntityNetworlAdapterHost pr) {
+        return new CharacterNetworkAdapter(e, config, pr);
     }
 }
 
-class CharacterNetworkAdapter implements IEntityNetworkAdapter {
+class CharacterNetworkAdapter implements IClientEntityNetworkAdapter {
     private final IRpgCharacter entity;
     private boolean locationChanged = true;
     private final EntityConfigurationDetails config;
@@ -60,7 +59,7 @@ class CharacterNetworkAdapter implements IEntityNetworkAdapter {
     }
 
     @Override
-    public List<WorldVisit> pollDelta(int deltaTime) throws EntityNetworkAdapterException {
+    public List<IServerVisit> poll(int deltaTime) {
         host.poll();
 
         if(!this.isOwner())
@@ -77,7 +76,7 @@ class CharacterNetworkAdapter implements IEntityNetworkAdapter {
 
         lastSync = 0;
 
-        List<WorldVisit> response = new ArrayList<>();
+        List<IServerVisit> response = new ArrayList<>();
 
         boolean needUpdate = false;
         if(curLoc.difference(lastLocation).getLength() >= VELOCITY_DELTA_RELAY) {
@@ -91,7 +90,7 @@ class CharacterNetworkAdapter implements IEntityNetworkAdapter {
         if(needUpdate) {
             lastLocation = new Vector3F(curLoc);
             lastVelocity = new Vector3F(curVelocity);
-            response.add(new SetEntityVelocityCommand(entity.getInstanceName(), curLoc, curVelocity));
+            response.add(new ServerWorldVisit(new SetEntityVelocityCommand(entity.getInstanceName(), curLoc, curVelocity)));
         }
 
         return response;

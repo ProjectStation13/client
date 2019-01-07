@@ -2,9 +2,8 @@ package com.projectstation.client.network;
 
 import com.projectstation.client.ClientStationEntityFactory;
 import com.projectstation.client.network.entity.ClientNetworkEntityMappings;
+import com.projectstation.client.network.entity.IClientEntityNetworkAdapter;
 import com.projectstation.network.*;
-import com.projectstation.network.command.client.ClientWorldVisit;
-import com.projectstation.network.command.server.ServerCharacterRequest;
 import com.projectstation.network.command.server.ServerGetTime;
 import com.projectstation.network.command.server.ServerWorldVisit;
 import com.projectstation.network.entity.EntityNetworkAdapterException;
@@ -47,11 +46,11 @@ public class WorldClient {
 
     private World world;
     private final ClientNetworkEntityMappings netEntityMappings = new ClientNetworkEntityMappings();
-    private final Map<String, IEntityNetworkAdapter> entityNetworkAdapters = new HashMap<>();
+    private final Map<String, IClientEntityNetworkAdapter> entityNetworkAdapters = new HashMap<>();
 
     private final Queue<QueuedMessage> messageQueue = new ConcurrentLinkedQueue<>();
     private final NetworkMessageQueue<IServerVisit> writeQueue = new NetworkMessageQueue<>();
-    private final HashSet<IEntityNetworkAdapter> pollRequests = new HashSet<>();
+    private final HashSet<IClientPollable> pollRequests = new HashSet<>();
 
     private final IPhysicsWorldFactory physicsWorldFactory;
     private final IParallelEntityFactory parallelEntityFactory;
@@ -82,7 +81,6 @@ public class WorldClient {
         initNetwork(host, port);
 
         send(new ServerInitializeWorldRequest());
-        send(new ServerCharacterRequest());
         send(new ServerGetTime(System.nanoTime() / 1000000));
     }
 
@@ -148,15 +146,15 @@ public class WorldClient {
 
         clientHandler.poll();
 
-        NetworkMessageQueue<ServerWorldVisit> delta = new NetworkMessageQueue<>();
-        Set<IEntityNetworkAdapter> oldPr = new HashSet(pollRequests);
+        NetworkMessageQueue<IServerVisit> delta = new NetworkMessageQueue<>();
+        Set<IClientEntityNetworkAdapter> oldPr = new HashSet(pollRequests);
         pollRequests.clear();
-        for(IEntityNetworkAdapter e : oldPr) {
+        for(IClientEntityNetworkAdapter e : oldPr) {
             try {
-                for(WorldVisit v : e.pollDelta(deltaTime))
-                    delta.queue(new ServerWorldVisit(v));
+                for(IServerVisit v : e.poll(deltaTime))
+                    delta.queue(v);
 
-            } catch (EntityNetworkAdapterException ex) {
+            } catch (NetworkPollException ex) {
                 logger.error("Unable to poll delta of entity.", ex);
             }
         }
@@ -172,7 +170,7 @@ public class WorldClient {
             QueuedMessage msg = messageQueue.remove();
 
             try {
-                List<IServerVisit> response = msg.visit.visit(visitable, entityNetworkAdapters);
+                List<IServerVisit> response = msg.visit.visit(visitable);
 
                 if(!response.isEmpty()) {
                     for (IServerVisit v : response) {
@@ -203,11 +201,16 @@ public class WorldClient {
             if(details == null)
                 throw new RuntimeException("Synchronized entity has no configuration details.");
 
-            IEntityNetworkAdapter net = netEntityMappings.get(e.getClass()).create(e, details, new NetworkEntityAdapterHost(e.getInstanceName()));
+            IClientEntityNetworkAdapter net = createNetworkAdapter(e.getClass(), e, details, new NetworkEntityAdapterHost(e.getInstanceName()));
             entityNetworkAdapters.put(e.getInstanceName(), net);
             pollRequests.add(net);
         }
     }
+
+    private <T extends IEntity> IClientEntityNetworkAdapter createNetworkAdapter(Class<T> cls, Object entity, EntityConfigurationDetails config, IEntityNetworkAdapterFactory.IEntityNetworlAdapterHost host) {
+        return netEntityMappings.get(cls).create((T)entity, config, host);
+    }
+
 
     private void unregisterNetworkEntity(IEntity e) {
         entityNetworkAdapters.remove(e.getInstanceName());
@@ -302,6 +305,11 @@ public class WorldClient {
         @Override
         public boolean isOwner(String entityName) {
             return ownedEntities.contains(entityName);
+        }
+
+        @Override
+        public IEntityNetworkAdapter getAdapter(String entityName) {
+            return entityNetworkAdapters.get(entityName);
         }
     }
 
