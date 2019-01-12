@@ -21,8 +21,6 @@ package com.projectstation.client.gamestates;
 import com.jevaengine.spacestation.IState;
 import com.jevaengine.spacestation.IStateContext;
 import com.projectstation.client.network.WorldClient;
-import io.github.jevaengine.FutureResult;
-import io.github.jevaengine.IInitializationMonitor;
 import io.github.jevaengine.audio.IAudioClipFactory;
 import io.github.jevaengine.graphics.ISpriteFactory;
 import io.github.jevaengine.rpg.entity.character.IRpgCharacter;
@@ -30,7 +28,6 @@ import io.github.jevaengine.ui.*;
 import io.github.jevaengine.ui.IWindowFactory.WindowConstructionException;
 import io.github.jevaengine.world.IEffectMapFactory;
 import io.github.jevaengine.world.IParallelWorldFactory;
-import io.github.jevaengine.world.IWorldFactory.WorldConstructionException;
 import io.github.jevaengine.world.World;
 import io.github.jevaengine.world.entity.IEntityFactory;
 import io.github.jevaengine.world.entity.IParallelEntityFactory;
@@ -48,50 +45,33 @@ public class SynchronizeWithServer implements IState
 {
 	private IStateContext m_context;
 	private Window m_window;
-	
-	private final IWindowFactory m_windowFactory;
-	private final IParallelWorldFactory m_worldFactory;
-	private final IAudioClipFactory m_audioClipFactory;
-	private final ISpriteFactory m_spriteFactory;
-	private final IEntityFactory m_entityFactory;
-	
+
 	private final Logger m_logger = LoggerFactory.getLogger(SynchronizeWithServer.class);
 
+	private WorldClient m_client;
+	private final String m_nickName;
+	private final String m_host;
+	private final int m_port;
 	private final ILoadingWorldHandler m_handler;
 
-	private final WorldClient client;
-
-
-	private final IPhysicsWorldFactory m_physicsWorldFactory;
-	private final IParallelEntityFactory m_parallelEntityFactory;
-	private final IEffectMapFactory m_effectMapFactory;
-
-	public SynchronizeWithServer(IPhysicsWorldFactory physicsWorldFactory, IParallelEntityFactory parallelEntityFactory, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IWindowFactory windowFactory, IParallelWorldFactory worldFactory, IAudioClipFactory audioClipFactory, ISpriteFactory spriteFactory, ILoadingWorldHandler handler, String host, int port)
+	public SynchronizeWithServer(String nickName, ILoadingWorldHandler handler, String host, int port)
 	{
-		m_physicsWorldFactory = physicsWorldFactory;
-		m_parallelEntityFactory = parallelEntityFactory;
-		m_effectMapFactory = effectMapFactory;
-
-		m_entityFactory = entityFactory;
+		m_nickName = nickName;
+		m_host = host;
+		m_port = port;
 		m_handler = handler;
-		m_windowFactory = windowFactory;
-		m_worldFactory = worldFactory;
-		m_audioClipFactory = audioClipFactory;
-		m_spriteFactory = spriteFactory;
-
-		client = new WorldClient(physicsWorldFactory, parallelEntityFactory, effectMapFactory, entityFactory, host, port);
-
 	}
 	
 	@Override
 	public void enter(IStateContext context)
 	{
+		m_client = new WorldClient(m_nickName, context.getItemFactory(), context.getPhysicsWorldFactory(), context.getParallelEntityFactory(), context.getEffectMapFactory(), context.getEntityFactory(), m_host, m_port);
 		m_context = context;
 		try
 		{
 			final LoadingBehaviourInjector behavior = new LoadingBehaviourInjector();
 			
-			m_window = m_windowFactory.create(URI.create("file:///ui/windows/loading.jwl"), behavior);
+			m_window = context.getWindowFactory().create(URI.create("file:///ui/windows/loading.jwl"), behavior);
 			context.getWindowManager().addWindow(m_window);
 			m_window.center();
 
@@ -114,16 +94,17 @@ public class SynchronizeWithServer implements IState
 	@Override
 	public void update(int iDelta)
 	{
-		client.update(iDelta);
-		if(client.getWorld() != null && client.getPlayerEntity() != null &&
-				client.getWorld().getEntities().getByName(IRpgCharacter.class, client.getPlayerEntity()) != null)
+		m_client.update(iDelta);
+		if(m_client.getWorld() != null && m_client.getPlayerEntity() != null &&
+				m_client.getWorld().getEntities().getByName(IRpgCharacter.class, m_client.getPlayerEntity()) != null)
 		{
-			m_handler.done(client, client.getPlayerEntity(), client.getWorld());
+			m_handler.done(m_client, m_client.getPlayerEntity(), m_client.getWorld());
 		}
 
-		if(!client.isConnected()) {
+		if(!m_client.isConnected()) {
 			m_logger.error("Cannot synchronize with server, unable to establish connection.");
-			m_context.setState(new ConnectionMenu(m_physicsWorldFactory, m_parallelEntityFactory, m_effectMapFactory, m_entityFactory, m_windowFactory, m_worldFactory, m_audioClipFactory, m_spriteFactory));
+			String reason = m_client.getDisconnectReason();
+			m_context.setState(new DisconnectedErrorDisplay(reason));
 		}
 	}
 

@@ -23,8 +23,10 @@ import io.github.jevaengine.audio.IAudioClipFactory;
 import io.github.jevaengine.game.IGame;
 import io.github.jevaengine.game.IGameFactory;
 import io.github.jevaengine.game.IRenderer;
+import io.github.jevaengine.graphics.IFontFactory;
 import io.github.jevaengine.graphics.ISpriteFactory;
 import io.github.jevaengine.joystick.IInputSource;
+import io.github.jevaengine.rpg.item.IItemFactory;
 import io.github.jevaengine.rpg.spell.ISpellFactory;
 import io.github.jevaengine.ui.IWindowFactory;
 import io.github.jevaengine.world.IEffectMapFactory;
@@ -51,9 +53,15 @@ public final class ClientStationGameFactory implements IGameFactory
 	private final IEngineThreadPool m_threadPool;
 	private final IEffectMapFactory m_effectMapFactory;
 
+	private final IFontFactory m_fontFactory;
+
+	private final IItemFactory m_itemFactory;
+
 	@Inject
-	public ClientStationGameFactory(IPhysicsWorldFactory physicsWorldFactory, IEngineThreadPool threadPool, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IInputSource inputSource, IRenderer renderer, ISpriteFactory spriteFactory, IWindowFactory windowFactory, IWorldFactory worldFactory, IEngineThreadPool engineThreadPool, IAudioClipFactory audioClipFactory, ISpellFactory spellFactory)
+	public ClientStationGameFactory(IItemFactory itemFactory, IFontFactory fontFactory, IPhysicsWorldFactory physicsWorldFactory, IEngineThreadPool threadPool, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IInputSource inputSource, IRenderer renderer, ISpriteFactory spriteFactory, IWindowFactory windowFactory, IWorldFactory worldFactory, IEngineThreadPool engineThreadPool, IAudioClipFactory audioClipFactory, ISpellFactory spellFactory)
 	{
+		m_itemFactory = itemFactory;
+		m_fontFactory = fontFactory;
 		m_physicsWorldFactory = physicsWorldFactory;
 		m_threadPool = threadPool;
 		m_effectMapFactory = effectMapFactory;
@@ -70,6 +78,6 @@ public final class ClientStationGameFactory implements IGameFactory
 	
 	public IGame create()
 	{
-		return new ClientStationGame(m_physicsWorldFactory, m_threadPool, m_effectMapFactory, m_entityFactory, m_inputSource, m_windowFactory, m_worldFactory, m_spriteFactory, m_audioClipFactory, m_renderer.getResolution(), m_spellFactory);
+		return new ClientStationGame(m_itemFactory, m_fontFactory, m_physicsWorldFactory, m_threadPool, m_effectMapFactory, m_entityFactory, m_inputSource, m_windowFactory, m_worldFactory, m_spriteFactory, m_audioClipFactory, m_renderer.getResolution(), m_spellFactory);
 	}
 }

@@ -39,37 +39,29 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 
-public class ConnectionMenu implements IState
+public class DisconnectedErrorDisplay implements IState
 {
-	private static final String HOST = "127.0.0.1";
-	private static final int PORT = 7345;
-
-	private static final URI ENTRY_MAP = URI.create("file:///world/firstStationRework.jmp");
-	private static final URI MENU_AUDIO = URI.create("file:///audio/menu/0.ogg");
-
 	private IStateContext m_context;
 	private Window m_window;
 
-	private final Logger m_logger = LoggerFactory.getLogger(ConnectionMenu.class);
+	private final Logger m_logger = LoggerFactory.getLogger(DisconnectedErrorDisplay.class);
 
-	private IAudioClip m_menuAudio = new NullAudioClip();
+	private final String m_reason;
 
+
+	public DisconnectedErrorDisplay(String reason)
+	{
+		m_reason = reason;
+	}
+	
 	@Override
 	public void enter(IStateContext context)
 	{
-		try {
-			m_menuAudio = context.getAudioClipFactory().create(MENU_AUDIO);
-		} catch (IAudioClipFactory.AudioClipConstructionException ex) {
-			m_logger.error("Unable to construct background audio.", ex);
-		}
-
-		m_menuAudio.play();
-		m_menuAudio.repeat();
 		m_context = context;
 
 		try
 		{
-			m_window = context.getWindowFactory().create(URI.create("file:///ui/windows/connectionmenu.jwl"), new ConnectionMenuBehaviourInjector());
+			m_window = context.getWindowFactory().create(URI.create("file:///ui/windows/disconnectedErrorDisplay.jwl"), new DisconnectedErrorDisplayBehaviour());
 			context.getWindowManager().addWindow(m_window);
 			m_window.center();
 		} catch (WindowConstructionException e)
@@ -83,8 +75,6 @@ public class ConnectionMenu implements IState
 	@Override
 	public void leave()
 	{
-		m_menuAudio.stop();
-		m_menuAudio.dispose();
 		if(m_window != null)
 		{
 			m_context.getWindowManager().removeWindow(m_window);
@@ -95,27 +85,18 @@ public class ConnectionMenu implements IState
 	@Override
 	public void update(int iDelta) { }
 	
-	public class ConnectionMenuBehaviourInjector extends WindowBehaviourInjector
+	public class DisconnectedErrorDisplayBehaviour extends WindowBehaviourInjector
 	{
 		@Override
 		public void doInject() throws NoSuchControlException
 		{
-			final TextArea txtNickname = getControl(TextArea.class, "txtNickname");
-
-			getControl(Button.class, "btnConnect").getObservers().add(new IButtonPressObserver() {
+			getControl(TextArea.class, "txtReason").setText(m_reason);
+			getControl(Button.class, "btnContinue").getObservers().add(new IButtonPressObserver() {
 				@Override
 				public void onPress() {
-					String nickname = txtNickname.getText();
-					m_context.setState(new SynchronizeWithServer(nickname, new LoadingWorldHandler(), HOST, PORT));
+					m_context.setState(new ConnectionMenu());
 				}
 			});
-		}
-	}
-
-	private class LoadingWorldHandler implements SynchronizeWithServer.ILoadingWorldHandler {
-		@Override
-		public void done(WorldClient client, String playerName, World world) {
-			m_context.setState(new Playing(client, playerName, world));
 		}
 	}
 }

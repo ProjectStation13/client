@@ -4,15 +4,11 @@ import com.projectstation.network.IServerVisit;
 import com.projectstation.network.WorldVisit;
 import com.projectstation.network.command.server.ServerWorldVisit;
 import com.projectstation.network.command.world.SetEntityVelocityCommand;
-import com.projectstation.network.entity.EntityConfigurationDetails;
-import com.projectstation.network.entity.EntityNetworkAdapterException;
-import com.projectstation.network.entity.IEntityNetworkAdapter;
-import com.projectstation.network.entity.IEntityNetworkAdapterFactory;
+import com.projectstation.network.entity.*;
 import io.github.jevaengine.math.Vector2F;
 import io.github.jevaengine.math.Vector3F;
 import io.github.jevaengine.rpg.entity.character.IMovementResolver;
 import io.github.jevaengine.rpg.entity.character.IRpgCharacter;
-import io.github.jevaengine.world.entity.IEntity;
 import io.github.jevaengine.world.steering.ISteeringBehavior;
 
 import java.util.ArrayList;
@@ -51,11 +47,6 @@ class CharacterNetworkAdapter implements IClientEntityNetworkAdapter {
         lastLocation = entity.getBody().getLocation();
         lastVelocity = entity.getBody().getLinearVelocity();
         entity.getMovementResolver().queueTop(movementDirector);
-    }
-
-    @Override
-    public List<WorldVisit> createInitializeSteps() throws EntityNetworkAdapterException {
-        return new ArrayList<>();
     }
 
     @Override

@@ -2,16 +2,15 @@ package com.projectstation.client.network;
 
 import com.projectstation.client.ClientStationEntityFactory;
 import com.projectstation.client.network.entity.ClientNetworkEntityMappings;
-import com.projectstation.client.network.entity.IClientEntityNetworkAdapter;
+import com.projectstation.network.entity.IClientEntityNetworkAdapter;
 import com.projectstation.network.*;
 import com.projectstation.network.command.server.ServerGetTime;
-import com.projectstation.network.command.server.ServerWorldVisit;
-import com.projectstation.network.entity.EntityNetworkAdapterException;
 import com.projectstation.network.entity.IEntityNetworkAdapter;
 import com.projectstation.network.entity.IEntityNetworkAdapterFactory;
 import com.projectstation.network.entity.EntityConfigurationDetails;
-import com.projectstation.network.command.server.ServerInitializeWorldRequest;
+import com.projectstation.network.command.server.ServerJoinWorldRequest;
 import io.github.jevaengine.math.Vector3F;
+import io.github.jevaengine.rpg.item.IItemFactory;
 import io.github.jevaengine.util.IObserverRegistry;
 import io.github.jevaengine.util.Nullable;
 import io.github.jevaengine.util.Observers;
@@ -51,10 +50,12 @@ public class WorldClient {
     private final Queue<QueuedMessage> messageQueue = new ConcurrentLinkedQueue<>();
     private final NetworkMessageQueue<IServerVisit> writeQueue = new NetworkMessageQueue<>();
     private final HashSet<IClientPollable> pollRequests = new HashSet<>();
+    private final HashMap<String, String> nicknameMapping = new HashMap<>();
 
     private final IPhysicsWorldFactory physicsWorldFactory;
     private final IParallelEntityFactory parallelEntityFactory;
     private final IEffectMapFactory effectMapFactory;
+    private final IItemFactory itemFactory;
 
     private final IEntityFactory entityFactory;
 
@@ -69,10 +70,11 @@ public class WorldClient {
 
     EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-    private boolean isConnected = false;
+    private String lastDisconnectReason = "Unknown.";
 
-    public WorldClient(IPhysicsWorldFactory physicsWorldFactory, IParallelEntityFactory parallelEntityFactory, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, String host, int port) {
+    public WorldClient(String nickname, IItemFactory itemFactory, IPhysicsWorldFactory physicsWorldFactory, IParallelEntityFactory parallelEntityFactory, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, String host, int port) {
         this.entityFactory = entityFactory;
+        this.itemFactory = itemFactory;
 
         this.physicsWorldFactory = physicsWorldFactory;
         this.parallelEntityFactory = parallelEntityFactory;
@@ -80,7 +82,7 @@ public class WorldClient {
 
         initNetwork(host, port);
 
-        send(new ServerInitializeWorldRequest());
+        send(new ServerJoinWorldRequest(nickname));
         send(new ServerGetTime(System.nanoTime() / 1000000));
     }
 
@@ -93,7 +95,7 @@ public class WorldClient {
     }
 
     public boolean isConnected() {
-        return isConnected;
+        return clientHandler.isConnected();
     }
 
     @Nullable
@@ -104,6 +106,10 @@ public class WorldClient {
     @Nullable
     public World getWorld() {
         return world;
+    }
+
+    public Map<String, String> getNicknameMapping() {
+        return Collections.unmodifiableMap(nicknameMapping);
     }
 
     private void initNetwork(String host, int port) {
@@ -127,12 +133,14 @@ public class WorldClient {
 
             if(!channel.isSuccess())
                 logger.error("Unable to establish connection", channel.cause());
-            else
-                isConnected = true;
 
         } catch (InterruptedException ex) {
             logger.error("Unable to establish connection", ex);
             Thread.currentThread().interrupt();
+        }
+
+        if(!clientHandler.isConnected()) {
+            lastDisconnectReason = "Unable to establish a connection with the host. The host may not be accessible or available.";
         }
     }
 
@@ -198,8 +206,10 @@ public class WorldClient {
 
         IEntityNetworkAdapterFactory factory = netEntityMappings.get(e.getClass());
         if (factory != null) {
-            if(details == null)
-                throw new RuntimeException("Synchronized entity has no configuration details.");
+            if(details == null) {
+                logger.info("Synchronized entity has no configuration details.");
+                details = new EntityConfigurationDetails(entityFactory.lookup(e.getClass()));
+            }
 
             IClientEntityNetworkAdapter net = createNetworkAdapter(e.getClass(), e, details, new NetworkEntityAdapterHost(e.getInstanceName()));
             entityNetworkAdapters.put(e.getInstanceName(), net);
@@ -214,6 +224,10 @@ public class WorldClient {
 
     private void unregisterNetworkEntity(IEntity e) {
         entityNetworkAdapters.remove(e.getInstanceName());
+    }
+
+    public String getDisconnectReason() {
+        return lastDisconnectReason;
     }
 
     private class NetworkEntityAdapterHost implements IEntityNetworkAdapterFactory.IEntityNetworlAdapterHost {
@@ -237,6 +251,11 @@ public class WorldClient {
     private class VisitableWorldClientHandler implements IClientWorldHandler {
 
         private final Set<String> ownedEntities = new HashSet<>();
+
+        @Override
+        public void setEntityNickname(String instanceName, String nickname) {
+            nicknameMapping.put(instanceName, nickname);
+        }
 
         @Override
         public void setPlayerEntity(String name) {
@@ -282,6 +301,11 @@ public class WorldClient {
         }
 
         @Override
+        public IItemFactory getItemFactory() {
+            return itemFactory;
+        }
+
+        @Override
         public void setServerTime(long time) {
 
             serverTimeDelta = time - System.nanoTime() / 1000000;
@@ -311,6 +335,11 @@ public class WorldClient {
         public IEntityNetworkAdapter getAdapter(String entityName) {
             return entityNetworkAdapters.get(entityName);
         }
+
+        @Override
+        public void disconnect(String reason) {
+            clientHandler.disconnect(reason);
+        }
     }
 
     public interface WorldClientListener {
@@ -321,6 +350,13 @@ public class WorldClient {
     class WorldClientHandler extends SimpleChannelInboundHandler<IClientVisit> {
 
         private ChannelHandlerContext ctx = null;
+
+        public void disconnect(String reason) {
+            if(ctx != null) {
+                lastDisconnectReason = reason;
+                ctx.disconnect();
+            }
+        }
 
         public void send(IServerVisit msg) {
             if(ctx == null)
@@ -364,7 +400,6 @@ public class WorldClient {
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             super.channelActive(ctx);
             this.ctx = ctx;
-            ctx.writeAndFlush(new String("WHAT THE FUCK"));
         }
 
         @Override
@@ -372,6 +407,9 @@ public class WorldClient {
             messageQueue.add(new QueuedMessage(channelHandlerContext, clientVisit));
         }
 
+        public boolean isConnected() {
+            return ctx != null && !ctx.isRemoved();
+        }
     }
 
     private class WorldObserver implements World.IWorldObserver {

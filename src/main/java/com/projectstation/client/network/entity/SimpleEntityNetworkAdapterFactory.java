@@ -2,11 +2,7 @@ package com.projectstation.client.network.entity;
 
 import com.projectstation.network.IServerVisit;
 import com.projectstation.network.WorldVisit;
-import com.projectstation.network.entity.EntityConfigurationDetails;
-import com.projectstation.network.entity.EntityNetworkAdapterException;
-import com.projectstation.network.entity.IEntityNetworkAdapter;
-import com.projectstation.network.entity.IEntityNetworkAdapterFactory;
-import io.github.jevaengine.math.Vector2F;
+import com.projectstation.network.entity.*;
 import io.github.jevaengine.world.entity.IEntity;
 import io.github.jevaengine.world.steering.ISteeringBehavior;
 
@@ -28,11 +24,6 @@ class SimpleEntityNetworkAdapter implements IClientEntityNetworkAdapter {
     public SimpleEntityNetworkAdapter(IEntity entity, EntityConfigurationDetails config, IEntityNetworkAdapterFactory.IEntityNetworlAdapterHost pr) {
         this.entity = entity;
         this.config = config;
-    }
-
-    @Override
-    public List<WorldVisit> createInitializeSteps() throws EntityNetworkAdapterException {
-        return new ArrayList<>();
     }
 
     @Override

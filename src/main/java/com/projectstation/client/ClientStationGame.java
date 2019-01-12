@@ -25,12 +25,14 @@ import io.github.jevaengine.DefaultEngineThreadPool;
 import io.github.jevaengine.IEngineThreadPool;
 import io.github.jevaengine.audio.IAudioClipFactory;
 import io.github.jevaengine.game.DefaultGame;
+import io.github.jevaengine.graphics.IFontFactory;
 import io.github.jevaengine.graphics.IRenderable;
 import io.github.jevaengine.graphics.ISpriteFactory;
 import io.github.jevaengine.graphics.ISpriteFactory.SpriteConstructionException;
 import io.github.jevaengine.graphics.NullGraphic;
 import io.github.jevaengine.joystick.IInputSource;
 import io.github.jevaengine.math.Vector2D;
+import io.github.jevaengine.rpg.item.IItemFactory;
 import io.github.jevaengine.rpg.spell.ISpellFactory;
 import io.github.jevaengine.ui.IWindowFactory;
 import io.github.jevaengine.world.IEffectMapFactory;
@@ -40,6 +42,7 @@ import io.github.jevaengine.world.ThreadPooledWorldFactory;
 import io.github.jevaengine.world.entity.IEntityFactory;
 import io.github.jevaengine.world.entity.IParallelEntityFactory;
 import io.github.jevaengine.world.entity.ThreadPooledEntityFactory;
+import io.github.jevaengine.world.physics.IPhysicsWorld;
 import io.github.jevaengine.world.physics.IPhysicsWorldFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +56,19 @@ public final class ClientStationGame extends DefaultGame implements IStateContex
 	
 	private Logger m_logger = LoggerFactory.getLogger(ClientStationGame.class);
 
-	public ClientStationGame(IPhysicsWorldFactory physicsWorldFactory, IEngineThreadPool threadPool, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IInputSource inputSource, IWindowFactory windowFactory, IWorldFactory worldFactory, ISpriteFactory spriteFactory, IAudioClipFactory audioClipFactory, Vector2D resolution, ISpellFactory spellFactory)
+	private final IFontFactory m_fontFactory;
+	private final IEntityFactory m_entityFactory;
+	private final IWindowFactory m_windowFactory;
+	private final IWorldFactory m_worldFactory;
+	private final IAudioClipFactory m_audioClipFactory;
+	private final ISpriteFactory m_spriteFactory;
+	private final IParallelWorldFactory m_parallelWorldFactory;
+	private final IPhysicsWorldFactory m_physicsWorldFactory;
+	private final IParallelEntityFactory m_parallelEntityFactory;
+	private final IEffectMapFactory m_effectMapFactory;
+	private final IItemFactory m_itemFactory;
+
+	public ClientStationGame(IItemFactory itemFactory, IFontFactory fontFactory, IPhysicsWorldFactory physicsWorldFactory, IEngineThreadPool threadPool, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IInputSource inputSource, IWindowFactory windowFactory, IWorldFactory worldFactory, ISpriteFactory spriteFactory, IAudioClipFactory audioClipFactory, Vector2D resolution, ISpellFactory spellFactory)
 	{
 		super(inputSource, resolution);
 
@@ -67,9 +82,76 @@ public final class ClientStationGame extends DefaultGame implements IStateContex
 			m_logger.error("Unable to construct cursor sprite. Reverting to null graphic for cursor.", e);
 			m_cursor = new NullGraphic();
 		}
-		
-		m_state = new EntryState(physicsWorldFactory, parallelEntityFactory, effectMapFactory, entityFactory, windowFactory, worldFactory, audioClipFactory, spriteFactory);
+
+		m_itemFactory = itemFactory;
+		m_parallelEntityFactory = new ThreadPooledEntityFactory(entityFactory, threadPool);
+		m_effectMapFactory = effectMapFactory;
+		m_physicsWorldFactory = physicsWorldFactory;
+		m_fontFactory = fontFactory;
+		m_audioClipFactory = audioClipFactory;
+		m_entityFactory = entityFactory;
+		m_spriteFactory = spriteFactory;
+		m_worldFactory = worldFactory;
+		m_windowFactory = windowFactory;
+		m_parallelWorldFactory = new ThreadPooledWorldFactory(worldFactory, threadPool);
+
+		m_state = new EntryState();
 		m_state.enter(this);
+	}
+
+	@Override
+	public IItemFactory getItemFactory() {
+		return m_itemFactory;
+	}
+
+	@Override
+	public IPhysicsWorldFactory getPhysicsWorldFactory() {
+		return m_physicsWorldFactory;
+	}
+
+	@Override
+	public IEntityFactory getEntityFactory() {
+		return m_entityFactory;
+	}
+
+	@Override
+	public IParallelEntityFactory getParallelEntityFactory() {
+		return m_parallelEntityFactory;
+	}
+
+	@Override
+	public IEffectMapFactory getEffectMapFactory() {
+		return m_effectMapFactory;
+	}
+
+	@Override
+	public IFontFactory getFontFactory() {
+		return m_fontFactory;
+	}
+
+	@Override
+	public IWindowFactory getWindowFactory() {
+		return m_windowFactory;
+	}
+
+	@Override
+	public IWorldFactory getWorldFactory() {
+		return m_worldFactory;
+	}
+
+	@Override
+	public IParallelWorldFactory getParallelWorldFactory() {
+		return m_parallelWorldFactory;
+	}
+
+	@Override
+	public IAudioClipFactory getAudioClipFactory() {
+		return m_audioClipFactory;
+	}
+
+	@Override
+	public ISpriteFactory getSpriteFactory() {
+		return m_spriteFactory;
 	}
 
 	@Override
@@ -93,29 +175,10 @@ public final class ClientStationGame extends DefaultGame implements IStateContex
 	
 	private static class EntryState implements IState
 	{
-
-		private final IPhysicsWorldFactory m_physicsWorldFactory;
-		private final IParallelEntityFactory m_parallelEntityFactory;
-		private final IEffectMapFactory m_effectMapFactory;
-		private final IEntityFactory m_entityFactory;
-		private final IWindowFactory m_windowFactory;
-		private final IParallelWorldFactory m_worldFactory;
-		private final IAudioClipFactory m_audioClipFactory;
-		private final ISpriteFactory m_spriteFactory;
-		
 		private IStateContext m_context;
 
-		public EntryState(IPhysicsWorldFactory physicsWorldFactory, IParallelEntityFactory parallelEntityFactory, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IWindowFactory windowFactory, IWorldFactory worldFactory, IAudioClipFactory audioClipFactory, ISpriteFactory spriteFactory)
+		public EntryState()
 		{
-			m_physicsWorldFactory = physicsWorldFactory;
-			m_parallelEntityFactory = parallelEntityFactory;
-			m_effectMapFactory = effectMapFactory;
-
-			m_entityFactory = entityFactory;
-			m_windowFactory = windowFactory;
-			m_worldFactory = new ThreadPooledWorldFactory(worldFactory, new DefaultEngineThreadPool());
-			m_audioClipFactory = audioClipFactory;
-			m_spriteFactory = spriteFactory;
 		}
 		
 		@Override
@@ -130,7 +193,7 @@ public final class ClientStationGame extends DefaultGame implements IStateContex
 		@Override
 		public void update(int deltaTime)
 		{
-			m_context.setState(new ConnectionMenu(m_physicsWorldFactory, m_parallelEntityFactory, m_effectMapFactory, m_entityFactory, m_windowFactory, m_worldFactory, m_audioClipFactory, m_spriteFactory));
+			m_context.setState(new ConnectionMenu());
 		}
 	}
 }
