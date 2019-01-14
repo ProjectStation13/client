@@ -21,7 +21,6 @@ package com.projectstation.client;
 import com.jevaengine.spacestation.IState;
 import com.jevaengine.spacestation.IStateContext;
 import com.projectstation.client.gamestates.ConnectionMenu;
-import io.github.jevaengine.DefaultEngineThreadPool;
 import io.github.jevaengine.IEngineThreadPool;
 import io.github.jevaengine.audio.IAudioClipFactory;
 import io.github.jevaengine.game.DefaultGame;
@@ -33,7 +32,6 @@ import io.github.jevaengine.graphics.NullGraphic;
 import io.github.jevaengine.joystick.IInputSource;
 import io.github.jevaengine.math.Vector2D;
 import io.github.jevaengine.rpg.item.IItemFactory;
-import io.github.jevaengine.rpg.spell.ISpellFactory;
 import io.github.jevaengine.ui.IWindowFactory;
 import io.github.jevaengine.world.IEffectMapFactory;
 import io.github.jevaengine.world.IParallelWorldFactory;
@@ -42,7 +40,6 @@ import io.github.jevaengine.world.ThreadPooledWorldFactory;
 import io.github.jevaengine.world.entity.IEntityFactory;
 import io.github.jevaengine.world.entity.IParallelEntityFactory;
 import io.github.jevaengine.world.entity.ThreadPooledEntityFactory;
-import io.github.jevaengine.world.physics.IPhysicsWorld;
 import io.github.jevaengine.world.physics.IPhysicsWorldFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +65,7 @@ public final class ClientStationGame extends DefaultGame implements IStateContex
 	private final IEffectMapFactory m_effectMapFactory;
 	private final IItemFactory m_itemFactory;
 
-	public ClientStationGame(IItemFactory itemFactory, IFontFactory fontFactory, IPhysicsWorldFactory physicsWorldFactory, IEngineThreadPool threadPool, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IInputSource inputSource, IWindowFactory windowFactory, IWorldFactory worldFactory, ISpriteFactory spriteFactory, IAudioClipFactory audioClipFactory, Vector2D resolution, ISpellFactory spellFactory)
+	public ClientStationGame(IItemFactory itemFactory, IFontFactory fontFactory, IPhysicsWorldFactory physicsWorldFactory, IEngineThreadPool threadPool, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IInputSource inputSource, IWindowFactory windowFactory, IWorldFactory worldFactory, ISpriteFactory spriteFactory, IAudioClipFactory audioClipFactory, Vector2D resolution)
 	{
 		super(inputSource, resolution);
 
