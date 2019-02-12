@@ -18,25 +18,19 @@
  */
 package com.projectstation.client.network.ui;
 
+import com.jevaengine.spacestation.item.SpaceCharacterWieldTarget;
 import com.jevaengine.spacestation.ui.LoadoutHudFactory;
 import com.jevaengine.spacestation.ui.SimpleItemContainer;
 import com.jevaengine.spacestation.ui.SimpleItemContainer.ISimpleItemContainerObserver;
 import com.projectstation.client.network.WorldClient;
 import com.projectstation.network.command.server.ServerWorldVisit;
 import com.projectstation.network.command.world.UnequipItemCommand;
-import io.github.jevaengine.IDisposable;
-import io.github.jevaengine.math.Rect2D;
-import io.github.jevaengine.math.Vector2D;
 import io.github.jevaengine.rpg.entity.character.ILoadout;
 import io.github.jevaengine.rpg.entity.character.IRpgCharacter;
-import io.github.jevaengine.rpg.item.IImmutableItemSlot;
 import io.github.jevaengine.rpg.item.IItem.IWieldTarget;
-import io.github.jevaengine.rpg.item.IItemStore;
-import io.github.jevaengine.rpg.item.usr.UsrWieldTarget;
 import io.github.jevaengine.ui.*;
 import io.github.jevaengine.ui.IWindowFactory.WindowConstructionException;
 import io.github.jevaengine.util.Observers;
-import io.github.jevaengine.world.entity.IEntity;
 
 import java.net.URI;
 
@@ -85,19 +79,19 @@ public final class ClientLoadoutHudFactory {
 			final SimpleItemContainer head = getControl(SimpleItemContainer.class, "head");
 
 			ILoadout loadout = m_owner.getLoadout();
-			uniform.setSlot(loadout.getSlot(UsrWieldTarget.Uniform));
-			shoes.setSlot(loadout.getSlot(UsrWieldTarget.Feet));
-			gloves.setSlot(loadout.getSlot(UsrWieldTarget.Hands));
-			glasses.setSlot(loadout.getSlot(UsrWieldTarget.Eyes));
-			ears.setSlot(loadout.getSlot(UsrWieldTarget.Ears));
-			head.setSlot(loadout.getSlot(UsrWieldTarget.Mask));
+			uniform.setSlot(loadout.getSlot(SpaceCharacterWieldTarget.Uniform));
+			shoes.setSlot(loadout.getSlot(SpaceCharacterWieldTarget.Feet));
+			gloves.setSlot(loadout.getSlot(SpaceCharacterWieldTarget.Hands));
+			glasses.setSlot(loadout.getSlot(SpaceCharacterWieldTarget.Eyes));
+			ears.setSlot(loadout.getSlot(SpaceCharacterWieldTarget.Ears));
+			head.setSlot(loadout.getSlot(SpaceCharacterWieldTarget.Mask));
 		
-			uniform.getObservers().add(new MoveToInventoryObserver(UsrWieldTarget.Uniform));
-			shoes.getObservers().add(new MoveToInventoryObserver(UsrWieldTarget.Feet));
-			gloves.getObservers().add(new MoveToInventoryObserver(UsrWieldTarget.Hands));
-			glasses.getObservers().add(new MoveToInventoryObserver(UsrWieldTarget.Eyes));
-			ears.getObservers().add(new MoveToInventoryObserver(UsrWieldTarget.Ears));
-			head.getObservers().add(new MoveToInventoryObserver(UsrWieldTarget.Mask));
+			uniform.getObservers().add(new MoveToInventoryObserver(SpaceCharacterWieldTarget.Uniform));
+			shoes.getObservers().add(new MoveToInventoryObserver(SpaceCharacterWieldTarget.Feet));
+			gloves.getObservers().add(new MoveToInventoryObserver(SpaceCharacterWieldTarget.Hands));
+			glasses.getObservers().add(new MoveToInventoryObserver(SpaceCharacterWieldTarget.Eyes));
+			ears.getObservers().add(new MoveToInventoryObserver(SpaceCharacterWieldTarget.Ears));
+			head.getObservers().add(new MoveToInventoryObserver(SpaceCharacterWieldTarget.Mask));
 		}
 		
 		private class MoveToInventoryObserver implements ISimpleItemContainerObserver {

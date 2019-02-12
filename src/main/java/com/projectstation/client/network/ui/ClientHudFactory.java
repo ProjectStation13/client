@@ -18,6 +18,7 @@
  */
 package com.projectstation.client.network.ui;
 
+import com.jevaengine.spacestation.item.SpaceCharacterWieldTarget;
 import com.jevaengine.spacestation.ui.HudFactory;
 import com.jevaengine.spacestation.ui.SimpleItemContainer;
 import com.jevaengine.spacestation.ui.ToggleIcon;
@@ -25,15 +26,11 @@ import com.projectstation.client.network.WorldClient;
 import com.projectstation.network.command.server.ServerWorldVisit;
 import com.projectstation.network.command.world.UnequipItemCommand;
 import com.projectstation.network.command.world.UseItemInHandsCommand;
-import io.github.jevaengine.IDisposable;
-import io.github.jevaengine.math.Rect2D;
-import io.github.jevaengine.math.Vector2D;
 import io.github.jevaengine.rpg.entity.character.ILoadout;
 import io.github.jevaengine.rpg.entity.character.IRpgCharacter;
 import io.github.jevaengine.rpg.item.IItem;
 import io.github.jevaengine.rpg.item.IItemSlot;
 import io.github.jevaengine.rpg.item.IItemStore;
-import io.github.jevaengine.rpg.item.usr.UsrWieldTarget;
 import io.github.jevaengine.ui.*;
 import io.github.jevaengine.ui.IWindowFactory.WindowConstructionException;
 import io.github.jevaengine.util.Observers;
@@ -86,9 +83,9 @@ public final class ClientHudFactory {
 
 			final SimpleItemContainer hand = getControl(SimpleItemContainer.class, "toggleHand");
 
-			IItemSlot handSlot = m_loadout.getSlot(UsrWieldTarget.LeftHand);
+			IItemSlot handSlot = m_loadout.getSlot(SpaceCharacterWieldTarget.LeftHand);
 			hand.setSlot(handSlot);
-			hand.getObservers().add(new HandUse(handSlot, UsrWieldTarget.LeftHand));
+			hand.getObservers().add(new HandUse(handSlot, SpaceCharacterWieldTarget.LeftHand));
 			toggleInventory.getObservers().add(new ToggleIcon.IToggleIconObserver() {
 				@Override
 				public void toggled() {

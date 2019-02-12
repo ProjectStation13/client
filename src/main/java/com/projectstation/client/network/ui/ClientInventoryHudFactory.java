@@ -19,6 +19,7 @@
 package com.projectstation.client.network.ui;
 
 import com.jevaengine.spacestation.entity.ItemDrop;
+import com.jevaengine.spacestation.item.SpaceCharacterWieldTarget;
 import com.jevaengine.spacestation.ui.InventoryHudFactory;
 import com.jevaengine.spacestation.ui.SimpleItemContainer;
 import com.jevaengine.spacestation.ui.SimpleItemContainer.ISimpleItemContainerObserver;
@@ -26,23 +27,19 @@ import com.projectstation.client.network.WorldClient;
 import com.projectstation.network.command.server.ServerWorldVisit;
 import com.projectstation.network.command.world.DropInventoryItemCommand;
 import com.projectstation.network.command.world.EquipItemCommand;
-import io.github.jevaengine.IDisposable;
 import io.github.jevaengine.joystick.InputKeyEvent;
 import io.github.jevaengine.joystick.InputMouseEvent;
 import io.github.jevaengine.math.Rect2D;
 import io.github.jevaengine.math.Vector2D;
-import io.github.jevaengine.math.Vector3F;
 import io.github.jevaengine.rpg.entity.character.ILoadout;
 import io.github.jevaengine.rpg.entity.character.IRpgCharacter;
 import io.github.jevaengine.rpg.item.IItem;
 import io.github.jevaengine.rpg.item.IItem.IWieldTarget;
 import io.github.jevaengine.rpg.item.IItemSlot;
 import io.github.jevaengine.rpg.item.IItemStore;
-import io.github.jevaengine.rpg.item.usr.UsrWieldTarget;
 import io.github.jevaengine.ui.*;
 import io.github.jevaengine.ui.IWindowFactory.WindowConstructionException;
 import io.github.jevaengine.util.Observers;
-import io.github.jevaengine.world.entity.IEntity;
 
 import java.net.URI;
 
@@ -135,7 +132,7 @@ public final class ClientInventoryHudFactory {
 			}
 
 			private void tryUseWithHandsItem() {
-				IItemSlot inHands = m_loadout.getSlot(UsrWieldTarget.LeftHand);
+				IItemSlot inHands = m_loadout.getSlot(SpaceCharacterWieldTarget.LeftHand);
 
 				/*
 				if(inHands.isEmpty())
@@ -148,7 +145,7 @@ public final class ClientInventoryHudFactory {
 
 			@Override
 			public void selected() {
-				IItemSlot inHands = m_loadout.getSlot(UsrWieldTarget.LeftHand);
+				IItemSlot inHands = m_loadout.getSlot(SpaceCharacterWieldTarget.LeftHand);
 
 				if(m_slot.isEmpty()) {
 					if(!inHands.isEmpty())
