@@ -27,6 +27,7 @@ import com.jevaengine.spacestation.StationAssetStreamFactory;
 import com.jevaengine.spacestation.entity.character.SpaceCharacterFactory;
 import com.jevaengine.spacestation.item.StationItemFactory;
 import com.jevaengine.spacestation.ui.StationControlFactory;
+import com.projectstation.client.network.entity.ClientSpaceCharacterFactory;
 import io.github.jevaengine.IAssetStreamFactory;
 import io.github.jevaengine.audio.IAudioClipFactory;
 import io.github.jevaengine.config.CachedConfigurationFactory;
@@ -163,7 +164,7 @@ public class Main implements WindowListener
 			bind(IRouteFactory.class).to(AStarRouteFactory.class);
 			bind(IInputSource.class).toInstance(FrameInputSource.create(m_frame));
 			bind(IGameFactory.class).to(ClientStationGameFactory.class);
-			bind(IRpgCharacterFactory.class).to(SpaceCharacterFactory.class);
+			bind(IRpgCharacterFactory.class).to(ClientSpaceCharacterFactory.class);
 
 			bind(IEntityFactory.class).toProvider(new Provider<IEntityFactory>() {
 				@Inject

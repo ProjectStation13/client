@@ -206,14 +206,18 @@ public class WorldClient {
 
         IEntityNetworkAdapterFactory factory = netEntityMappings.get(e.getClass());
         if (factory != null) {
-            if(details == null) {
+            if (details == null) {
                 logger.info("Synchronized entity has no configuration details.");
                 details = new EntityConfigurationDetails(entityFactory.lookup(e.getClass()));
             }
 
             IClientEntityNetworkAdapter net = createNetworkAdapter(e.getClass(), e, details, new NetworkEntityAdapterHost(e.getInstanceName()));
-            entityNetworkAdapters.put(e.getInstanceName(), net);
-            pollRequests.add(net);
+            if (net != null) {
+                entityNetworkAdapters.put(e.getInstanceName(), net);
+                pollRequests.add(net);
+            } else {
+                logger.error("Unable to create network adapter for entity " + e.getInstanceName() +", Not synchronizing.");
+            }
         }
     }
 
