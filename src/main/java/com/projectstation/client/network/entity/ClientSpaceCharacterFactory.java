@@ -4,6 +4,7 @@ import com.jevaengine.spacestation.entity.character.ISpaceCharacterStatusResolve
 import com.jevaengine.spacestation.entity.character.ISpaceCharacterStatusResolverFactory;
 import com.jevaengine.spacestation.entity.character.SpaceCharacterFactory;
 import com.jevaengine.spacestation.entity.character.SpaceCharacterStatusResolverFactory;
+import com.jevaengine.spacestation.entity.character.symptoms.ISymptom;
 import com.jevaengine.spacestation.entity.character.symptoms.ISymptomDetails;
 import io.github.jevaengine.audio.IAudioClipFactory;
 import io.github.jevaengine.config.IConfigurationFactory;
@@ -36,32 +37,7 @@ public class ClientSpaceCharacterFactory extends SpaceCharacterFactory {
         return new ISpaceCharacterStatusResolverFactory() {
             @Override
             public ISpaceCharacterStatusResolver create(IRpgCharacter host, AttributeSet attributes, IActionSceneModel model) {
-                return new ISpaceCharacterStatusResolver() {
-                    @Override
-                    public List<ISymptomDetails> getSymptoms() {
-                        return new ArrayList<>();
-                    }
-
-                    @Override
-                    public boolean isDead() {
-                        return false;
-                    }
-
-                    @Override
-                    public IObserverRegistry getObservers() {
-                        return new Observers();
-                    }
-
-                    @Override
-                    public void update(int deltaTime) {
-
-                    }
-
-                    @Override
-                    public IActionSceneModel decorate(IActionSceneModel subject) {
-                        return subject;
-                    }
-                };
+                return new ClientCharacterStatusResolver(attributes);
             }
         };
     }
