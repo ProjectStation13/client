@@ -22,6 +22,7 @@ import com.jevaengine.spacestation.IState;
 import com.jevaengine.spacestation.IStateContext;
 import com.jevaengine.spacestation.StationProjectionFactory;
 import com.jevaengine.spacestation.entity.IInteractableEntity;
+import com.jevaengine.spacestation.entity.character.SpaceCharacter;
 import com.jevaengine.spacestation.gamestates.MainMenu;
 import com.jevaengine.spacestation.gas.GasSimulationNetwork;
 import com.jevaengine.spacestation.ui.*;
@@ -34,6 +35,7 @@ import com.jevaengine.spacestation.ui.playing.PlayingWindowFactory.PlayingWindow
 import com.jevaengine.spacestation.ui.playing.WorldInteractionBehaviorInjector;
 import com.projectstation.client.network.WorldClient;
 import com.projectstation.client.network.entity.interaction.DoorInteractionHandler;
+import com.projectstation.client.network.ui.ChatHudFactory;
 import com.projectstation.client.network.ui.ClientHudFactory;
 import com.projectstation.client.network.ui.ClientInventoryHudFactory;
 import com.projectstation.client.network.ui.ClientLoadoutHudFactory;
@@ -87,7 +89,7 @@ public class Playing implements IState {
 
 	private final Logger m_logger = LoggerFactory.getLogger(Playing.class);
 
-	private IRpgCharacter m_player = new NullRpgCharacter();
+	private SpaceCharacter m_player = null;
 
 	private Hud m_hud;
 	private LoadoutHud m_loadoutHud;
@@ -97,6 +99,7 @@ public class Playing implements IState {
 	private final WorldClient m_client;
 
 	private IFont m_nicknameFont = new NullFont();
+	private ChatHudFactory.ChatHud chatHud;
 
 	public Playing(WorldClient client, String playerEntityName, World world) {
 		m_world = world;
@@ -131,12 +134,13 @@ public class Playing implements IState {
 			camera.addEffect(new NicknameEffect2());
 			camera.setZoom(CAMERA_ZOOM);
 
-			IRpgCharacter playerEntityBuffer = m_world.getEntities().getByName(IRpgCharacter.class, m_playerEntityName);
+			SpaceCharacter playerEntityBuffer = m_world.getEntities().getByName(SpaceCharacter.class, m_playerEntityName);
 
 			if (playerEntityBuffer != null) {
 				m_player = playerEntityBuffer;
 			} else {
-				m_logger.error("Character entity was not placed in world. Using null character entity instead.");
+				m_logger.error("Character entity was not placed in world.");
+				return;
 			}
 
 			camera.attach(m_world);
@@ -173,7 +177,28 @@ public class Playing implements IState {
 					m_inventoryHud.setVisible(isVisible);
 				}
 			});
-			
+
+			CharacterStatusHudFactory.StatusHud hud = new CharacterStatusHudFactory(context.getWindowManager(), context.getWindowFactory()).create(m_player.getAttributes(), m_player.getStatusResolver());
+			int y = context.getWindowManager().getResolution().y / 2 - hud.getBounds().height;
+			hud.setMovable(false);
+			hud.setTopMost(true);
+			hud.setVisible(true);
+			hud.setLocation(new Vector2D(context.getWindowManager().getResolution().x - hud.getBounds().width - 20, y));
+
+			chatHud = new ChatHudFactory(context.getWindowManager(), context.getWindowFactory()).create();
+			y = context.getWindowManager().getResolution().y - chatHud.getBounds().height - 20;
+			chatHud.setMovable(false);
+			chatHud.setTopMost(true);
+			chatHud.setVisible(true);
+			chatHud.setLocation(new Vector2D(20, y));
+			chatHud.getObservers().add(new ChatHudFactory.IChatHudObserver() {
+				@Override
+				public void sendMessage(String message) {
+					m_client.sendChatMessage(message);
+				}
+			});
+
+
 			m_playingWindow = new PlayingWindowFactory(context.getWindowManager(), context.getWindowFactory()).create(camera, m_player, createInteractionHandlers(), new PlayerActionHandler());
 			m_playingWindow.center();
 			m_playingWindow.focus();
@@ -195,6 +220,10 @@ public class Playing implements IState {
 	public void update(int deltaTime) {
 		m_world.update(deltaTime);
 		m_client.update(deltaTime);
+
+		for(String s : m_client.pollChatMessages()) {
+			chatHud.appendMessage(s);
+		}
 	}
 
 	private class NicknameEffect2 implements ISceneBuffer.ISceneBufferEffect {

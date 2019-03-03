@@ -1,7 +1,6 @@
 package com.projectstation.client.network.entity;
 
 import com.projectstation.network.IServerVisit;
-import com.projectstation.network.WorldVisit;
 import com.projectstation.network.command.server.ServerWorldVisit;
 import com.projectstation.network.command.world.SetEntityVelocityCommand;
 import com.projectstation.network.entity.*;
@@ -17,7 +16,7 @@ import java.util.List;
 public class CharacterNetworkAdapterFactory implements IEntityNetworkAdapterFactory<IClientEntityNetworkAdapter, IRpgCharacter> {
 
     @Override
-    public IClientEntityNetworkAdapter create(IRpgCharacter e, EntityConfigurationDetails config, IEntityNetworlAdapterHost pr) {
+    public IClientEntityNetworkAdapter create(IRpgCharacter e, EntityConfigurationDetails config, IEntityNetworkAdapterHost pr) {
         return new CharacterNetworkAdapter(e, config, pr);
     }
 }
@@ -26,7 +25,7 @@ class CharacterNetworkAdapter implements IClientEntityNetworkAdapter {
     private final IRpgCharacter entity;
     private boolean locationChanged = true;
     private final EntityConfigurationDetails config;
-    private final IEntityNetworkAdapterFactory.IEntityNetworlAdapterHost host;
+    private final IEntityNetworkAdapterFactory.IEntityNetworkAdapterHost host;
 
     private static final float VELOCITY_DELTA_RELAY = 0.01f;
     private static final int SYNC_INTERVAL = 150;
@@ -39,7 +38,7 @@ class CharacterNetworkAdapter implements IClientEntityNetworkAdapter {
 
     private float m_speed = -1;
 
-    public CharacterNetworkAdapter(IRpgCharacter entity, EntityConfigurationDetails config, IEntityNetworkAdapterFactory.IEntityNetworlAdapterHost pr) {
+    public CharacterNetworkAdapter(IRpgCharacter entity, EntityConfigurationDetails config, IEntityNetworkAdapterFactory.IEntityNetworkAdapterHost pr) {
         this.host = pr;
         this.entity = entity;
         this.config = config;

@@ -2,6 +2,7 @@ package com.projectstation.client.network;
 
 import com.projectstation.client.ClientStationEntityFactory;
 import com.projectstation.client.network.entity.ClientNetworkEntityMappings;
+import com.projectstation.network.command.server.NewChatMessage;
 import com.projectstation.network.entity.IClientEntityNetworkAdapter;
 import com.projectstation.network.*;
 import com.projectstation.network.command.server.ServerGetTime;
@@ -51,6 +52,7 @@ public class WorldClient {
     private final NetworkMessageQueue<IServerVisit> writeQueue = new NetworkMessageQueue<>();
     private final HashSet<IClientPollable> pollRequests = new HashSet<>();
     private final HashMap<String, String> nicknameMapping = new HashMap<>();
+    private final List<String> chatQueue = new ArrayList<>();
 
     private final IPhysicsWorldFactory physicsWorldFactory;
     private final IParallelEntityFactory parallelEntityFactory;
@@ -107,6 +109,19 @@ public class WorldClient {
     public World getWorld() {
         return world;
     }
+
+    public List<String> pollChatMessages() {
+        List<String> chatMessages = new ArrayList<>(chatQueue);
+        chatQueue.clear();
+
+        return chatMessages;
+    }
+
+    public void sendChatMessage(String message) {
+        clientHandler.send(new NewChatMessage(message));
+        clientHandler.flush();
+    }
+
 
     public Map<String, String> getNicknameMapping() {
         return Collections.unmodifiableMap(nicknameMapping);
@@ -221,7 +236,7 @@ public class WorldClient {
         }
     }
 
-    private <T extends IEntity> IClientEntityNetworkAdapter createNetworkAdapter(Class<T> cls, Object entity, EntityConfigurationDetails config, IEntityNetworkAdapterFactory.IEntityNetworlAdapterHost host) {
+    private <T extends IEntity> IClientEntityNetworkAdapter createNetworkAdapter(Class<T> cls, Object entity, EntityConfigurationDetails config, IEntityNetworkAdapterFactory.IEntityNetworkAdapterHost host) {
         return netEntityMappings.get(cls).create((T)entity, config, host);
     }
 
@@ -234,7 +249,7 @@ public class WorldClient {
         return lastDisconnectReason;
     }
 
-    private class NetworkEntityAdapterHost implements IEntityNetworkAdapterFactory.IEntityNetworlAdapterHost {
+    private class NetworkEntityAdapterHost implements IEntityNetworkAdapterFactory.IEntityNetworkAdapterHost {
         private final String name;
 
         public NetworkEntityAdapterHost(String name) {
@@ -343,6 +358,11 @@ public class WorldClient {
         @Override
         public void disconnect(String reason) {
             clientHandler.disconnect(reason);
+        }
+
+        @Override
+        public void recieveChatMessage(String message) {
+            chatQueue.add(message);
         }
     }
 
