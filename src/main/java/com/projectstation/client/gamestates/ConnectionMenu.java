@@ -41,9 +41,6 @@ import java.net.URI;
 
 public class ConnectionMenu implements IState
 {
-	private static final String HOST = "127.0.0.1";
-	private static final int PORT = 7345;
-
 	private static final URI ENTRY_MAP = URI.create("file:///world/firstStationRework.jmp");
 	private static final URI MENU_AUDIO = URI.create("file:///audio/menu/0.ogg");
 
@@ -53,6 +50,13 @@ public class ConnectionMenu implements IState
 	private final Logger m_logger = LoggerFactory.getLogger(ConnectionMenu.class);
 
 	private IAudioClip m_menuAudio = new NullAudioClip();
+	private final String m_host;
+	private final int m_port;
+
+	public ConnectionMenu(String host, int port) {
+		m_host = host;
+		m_port = port;
+	}
 
 	@Override
 	public void enter(IStateContext context)
@@ -106,7 +110,7 @@ public class ConnectionMenu implements IState
 				@Override
 				public void onPress() {
 					String nickname = txtNickname.getText();
-					m_context.setState(new SynchronizeWithServer(nickname, new LoadingWorldHandler(), HOST, PORT));
+					m_context.setState(new SynchronizeWithServer(nickname, new LoadingWorldHandler(), m_host, m_port));
 				}
 			});
 		}
@@ -115,7 +119,7 @@ public class ConnectionMenu implements IState
 	private class LoadingWorldHandler implements SynchronizeWithServer.ILoadingWorldHandler {
 		@Override
 		public void done(WorldClient client, String playerName, World world) {
-			m_context.setState(new Playing(client, playerName, world));
+			m_context.setState(new Playing(m_host, m_port, client, playerName, world));
 		}
 	}
 }

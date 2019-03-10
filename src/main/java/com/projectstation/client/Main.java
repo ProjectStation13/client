@@ -22,6 +22,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
+import com.google.inject.name.Names;
 import com.jevaengine.spacestation.SpaceStationFactory;
 import com.jevaengine.spacestation.StationAssetStreamFactory;
 import com.jevaengine.spacestation.entity.character.SpaceCharacterFactory;
@@ -63,12 +64,15 @@ import io.github.jevaengine.world.scene.model.ISceneModelFactory;
 import io.github.jevaengine.world.scene.model.particle.DefaultParticleEmitterFactory;
 import io.github.jevaengine.world.scene.model.particle.IParticleEmitterFactory;
 import io.github.jevaengine.world.scene.model.sprite.SpriteSceneModelFactory;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import javax.inject.Inject;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.FileInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 
@@ -83,15 +87,40 @@ public class Main implements WindowListener
 
 	private JFrame m_frame;
 	private GameDriver m_gameDriver;
-	
+
+	private static String getConnectHost() {
+
+		try {
+			FileInputStream fis = new FileInputStream("server.json");
+			JSONObject cfg = new JSONObject(new JSONTokener(fis)).getJSONObject("master_list");
+
+			ServerList dialog = new ServerList(cfg.getString("host"), cfg.getInt("port"));
+			dialog.pack();
+			dialog.setVisible(true);
+
+			String host = dialog.getConnectHost();
+
+			if(host != null)
+				return host;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		System.exit(1);
+
+		return null;
+	}
+
 	public static void main(String[] args)
 	{
 		System.setProperty("sun.java2d.opengl", "true");
+
+		String host = getConnectHost();
 		Main m = new Main();
-		m.entry(args);
+		m.entry(host, args);
 	}
 
-	public void entry(String[] args)
+	public void entry(String host, String[] args)
 	{
 		m_frame = new JFrame();
 		try
@@ -144,7 +173,7 @@ public class Main implements WindowListener
 			//return;
 		}
 
-		Injector injector = Guice.createInjector(new EngineModule());
+		Injector injector = Guice.createInjector(new EngineModule(host));
 		m_gameDriver = injector.getInstance(GameDriver.class);
 		m_gameDriver.begin();
 		//m_frame.dispose();
@@ -158,9 +187,20 @@ public class Main implements WindowListener
 
 	private final class EngineModule extends AbstractModule
 	{
+		private final String host;
+
+		public EngineModule(String host) {
+			this.host = host;
+		}
+
 		@Override
 		protected void configure()
 		{
+
+			bind(String.class)
+					.annotatedWith(Names.named("ServerHost"))
+					.toInstance(host);
+
 			bind(IRouteFactory.class).to(AStarRouteFactory.class);
 			bind(IInputSource.class).toInstance(FrameInputSource.create(m_frame));
 			bind(IGameFactory.class).to(ClientStationGameFactory.class);

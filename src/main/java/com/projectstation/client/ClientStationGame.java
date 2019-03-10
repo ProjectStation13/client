@@ -23,6 +23,7 @@ import com.jevaengine.spacestation.IStateContext;
 import com.projectstation.client.gamestates.ConnectionMenu;
 import io.github.jevaengine.IEngineThreadPool;
 import io.github.jevaengine.audio.IAudioClipFactory;
+import io.github.jevaengine.config.IConfigurationFactory;
 import io.github.jevaengine.game.DefaultGame;
 import io.github.jevaengine.graphics.IFontFactory;
 import io.github.jevaengine.graphics.IRenderable;
@@ -64,18 +65,16 @@ public final class ClientStationGame extends DefaultGame implements IStateContex
 	private final IParallelEntityFactory m_parallelEntityFactory;
 	private final IEffectMapFactory m_effectMapFactory;
 	private final IItemFactory m_itemFactory;
+	private final IConfigurationFactory m_configFactory;
 
-	public ClientStationGame(IItemFactory itemFactory, IFontFactory fontFactory, IPhysicsWorldFactory physicsWorldFactory, IEngineThreadPool threadPool, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IInputSource inputSource, IWindowFactory windowFactory, IWorldFactory worldFactory, ISpriteFactory spriteFactory, IAudioClipFactory audioClipFactory, Vector2D resolution)
-	{
+	public ClientStationGame(String serverHost, IItemFactory itemFactory, IFontFactory fontFactory, IPhysicsWorldFactory physicsWorldFactory, IEngineThreadPool threadPool, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IInputSource inputSource, IWindowFactory windowFactory, IWorldFactory worldFactory, ISpriteFactory spriteFactory, IAudioClipFactory audioClipFactory, IConfigurationFactory configFactory, Vector2D resolution) {
 		super(inputSource, resolution);
-
+		m_configFactory = configFactory;
 		IParallelEntityFactory parallelEntityFactory = new ThreadPooledEntityFactory(entityFactory, threadPool);
 
-		try
-		{
+		try {
 			m_cursor = spriteFactory.create(URI.create("file:///ui/cursor.jsf"));
-		} catch (SpriteConstructionException e)
-		{
+		} catch (SpriteConstructionException e) {
 			m_logger.error("Unable to construct cursor sprite. Reverting to null graphic for cursor.", e);
 			m_cursor = new NullGraphic();
 		}
@@ -92,8 +91,18 @@ public final class ClientStationGame extends DefaultGame implements IStateContex
 		m_windowFactory = windowFactory;
 		m_parallelWorldFactory = new ThreadPooledWorldFactory(worldFactory, threadPool);
 
-		m_state = new EntryState();
-		m_state.enter(this);
+		String[] c = serverHost.split(":");
+		if (c.length != 2 || !c[1].matches("[0-9]+"))
+			m_logger.error("Invalid connection string.");
+		else {
+			m_state = new EntryState(c[0], Integer.valueOf(c[1]));
+			m_state.enter(this);
+		}
+	}
+
+	@Override
+	public IConfigurationFactory getConfigFactory() {
+		return m_configFactory;
 	}
 
 	@Override
@@ -173,9 +182,13 @@ public final class ClientStationGame extends DefaultGame implements IStateContex
 	private static class EntryState implements IState
 	{
 		private IStateContext m_context;
+		private final String m_host;
+		private final int m_port;
 
-		public EntryState()
+		public EntryState(String host, int port)
 		{
+			m_host = host;
+			m_port = port;
 		}
 		
 		@Override
@@ -190,7 +203,7 @@ public final class ClientStationGame extends DefaultGame implements IStateContex
 		@Override
 		public void update(int deltaTime)
 		{
-			m_context.setState(new ConnectionMenu());
+			m_context.setState(new ConnectionMenu(m_host, m_port));
 		}
 	}
 }

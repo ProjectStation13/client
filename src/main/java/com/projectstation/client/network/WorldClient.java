@@ -155,7 +155,7 @@ public class WorldClient {
         }
 
         if(!clientHandler.isConnected()) {
-            lastDisconnectReason = "Unable to establish a connection with the host. The host may not be accessible or available.";
+            lastDisconnectReason = "Unable to establish a connection with the host. The host may not be accessible or available or the server may be full.";
         }
     }
 

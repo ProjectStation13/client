@@ -18,8 +18,10 @@
  */
 package com.projectstation.client;
 
+import com.google.inject.name.Named;
 import io.github.jevaengine.IEngineThreadPool;
 import io.github.jevaengine.audio.IAudioClipFactory;
+import io.github.jevaengine.config.IConfigurationFactory;
 import io.github.jevaengine.game.IGame;
 import io.github.jevaengine.game.IGameFactory;
 import io.github.jevaengine.game.IRenderer;
@@ -52,10 +54,15 @@ public final class ClientStationGameFactory implements IGameFactory
 	private final IFontFactory m_fontFactory;
 
 	private final IItemFactory m_itemFactory;
+	private final IConfigurationFactory m_configFactory;
+
+	private String m_serverHost;
 
 	@Inject
-	public ClientStationGameFactory(IItemFactory itemFactory, IFontFactory fontFactory, IPhysicsWorldFactory physicsWorldFactory, IEngineThreadPool threadPool, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IInputSource inputSource, IRenderer renderer, ISpriteFactory spriteFactory, IWindowFactory windowFactory, IWorldFactory worldFactory, IEngineThreadPool engineThreadPool, IAudioClipFactory audioClipFactory)
+	public ClientStationGameFactory(IItemFactory itemFactory, IFontFactory fontFactory, IPhysicsWorldFactory physicsWorldFactory, IEngineThreadPool threadPool, IEffectMapFactory effectMapFactory, IEntityFactory entityFactory, IInputSource inputSource, IRenderer renderer, ISpriteFactory spriteFactory, IWindowFactory windowFactory, IWorldFactory worldFactory, IEngineThreadPool engineThreadPool, IAudioClipFactory audioClipFactory, IConfigurationFactory configFactory, @Named("ServerHost") String host)
 	{
+		m_serverHost = host;
+		m_configFactory = configFactory;
 		m_itemFactory = itemFactory;
 		m_fontFactory = fontFactory;
 		m_physicsWorldFactory = physicsWorldFactory;
@@ -73,6 +80,6 @@ public final class ClientStationGameFactory implements IGameFactory
 	
 	public IGame create()
 	{
-		return new ClientStationGame(m_itemFactory, m_fontFactory, m_physicsWorldFactory, m_threadPool, m_effectMapFactory, m_entityFactory, m_inputSource, m_windowFactory, m_worldFactory, m_spriteFactory, m_audioClipFactory, m_renderer.getResolution());
+		return new ClientStationGame(m_serverHost,  m_itemFactory, m_fontFactory, m_physicsWorldFactory, m_threadPool, m_effectMapFactory, m_entityFactory, m_inputSource, m_windowFactory, m_worldFactory, m_spriteFactory, m_audioClipFactory, m_configFactory, m_renderer.getResolution());
 	}
 }

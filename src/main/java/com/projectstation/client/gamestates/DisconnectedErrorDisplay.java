@@ -48,9 +48,13 @@ public class DisconnectedErrorDisplay implements IState
 
 	private final String m_reason;
 
+	private final String m_host;
+	private final int m_port;
 
-	public DisconnectedErrorDisplay(String reason)
+	public DisconnectedErrorDisplay(String host, int port, String reason)
 	{
+		m_host = host;
+		m_port = port;
 		m_reason = reason;
 	}
 	
@@ -94,7 +98,7 @@ public class DisconnectedErrorDisplay implements IState
 			getControl(Button.class, "btnContinue").getObservers().add(new IButtonPressObserver() {
 				@Override
 				public void onPress() {
-					m_context.setState(new ConnectionMenu());
+					m_context.setState(new ConnectionMenu(m_host, m_port));
 				}
 			});
 		}

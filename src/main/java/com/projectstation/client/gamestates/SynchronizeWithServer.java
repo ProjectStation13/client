@@ -104,7 +104,7 @@ public class SynchronizeWithServer implements IState
 		if(!m_client.isConnected()) {
 			m_logger.error("Cannot synchronize with server, unable to establish connection.");
 			String reason = m_client.getDisconnectReason();
-			m_context.setState(new DisconnectedErrorDisplay(reason));
+			m_context.setState(new DisconnectedErrorDisplay(m_host, m_port, reason));
 		}
 	}
 

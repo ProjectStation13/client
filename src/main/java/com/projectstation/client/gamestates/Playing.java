@@ -100,9 +100,13 @@ public class Playing implements IState {
 
 	private IFont m_nicknameFont = new NullFont();
 	private ChatHudFactory.ChatHud chatHud;
+	private final String m_host;
+	private final int m_port;
 
-	public Playing(WorldClient client, String playerEntityName, World world) {
+	public Playing(String host, int port, WorldClient client, String playerEntityName, World world) {
 		m_world = world;
+		m_host = host;
+		m_port = port;
 		m_client = client;
 		m_playerEntityName = playerEntityName;
 	}
@@ -130,7 +134,7 @@ public class Playing implements IState {
 		try {
 			ISceneBufferFactory sceneBufferFactory = new TopologicalOrthographicProjectionSceneBufferFactory(new StationProjectionFactory().create());
 			FollowCamera camera = new FollowCamera(sceneBufferFactory);
-			//camera.addEffect(new NicknameEffect());
+
 			camera.addEffect(new NicknameEffect2());
 			camera.setZoom(CAMERA_ZOOM);
 
@@ -205,7 +209,7 @@ public class Playing implements IState {
 			
 		} catch (WindowConstructionException e) {
 			m_logger.error("Error occured constructing demo world or world view. Reverting to MainMenu.", e);
-			m_context.setState(new ConnectionMenu());
+			m_context.setState(new ConnectionMenu(m_host, m_port));
 		}
 	}
 
