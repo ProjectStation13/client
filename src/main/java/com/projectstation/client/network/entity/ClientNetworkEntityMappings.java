@@ -4,6 +4,7 @@ import com.jevaengine.spacestation.entity.Infrastructure;
 import com.jevaengine.spacestation.entity.ItemDrop;
 import com.jevaengine.spacestation.entity.character.SpaceCharacter;
 import com.jevaengine.spacestation.entity.network.NetworkWire;
+import com.jevaengine.spacestation.entity.power.Dcpu;
 import com.jevaengine.spacestation.entity.power.PowerWire;
 import com.projectstation.network.entity.EntityNetworkAdapterMapping;
 import com.projectstation.network.entity.IClientEntityNetworkAdapter;
@@ -22,5 +23,6 @@ public class ClientNetworkEntityMappings extends EntityNetworkAdapterMapping<ICl
         register(NetworkWire.class, new SimpleEntityNetworkAdapterFactory());
         register(PowerWire.class, new SimpleEntityNetworkAdapterFactory());*/
         register(SceneArtifact.class, new SimpleEntityNetworkAdapterFactory());
+        register(Dcpu.class, new DcpuNetworkAdapterFactory());
     }
 }
