@@ -22,6 +22,8 @@ import io.github.jevaengine.world.entity.IEntityFactory;
 import io.github.jevaengine.world.entity.IParallelEntityFactory;
 import io.github.jevaengine.world.physics.IPhysicsWorldFactory;
 import io.netty.channel.*;
+import io.netty.handler.codec.compression.ZlibCodecFactory;
+import io.netty.handler.codec.compression.ZlibWrapper;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
@@ -136,6 +138,10 @@ public class WorldClient {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline p = ch.pipeline();
+
+                            p.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.GZIP));
+                            p.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.GZIP));
+
                             p.addLast(
                                     new ObjectEncoder(),
                                     new ObjectDecoder(ClassResolvers.cacheDisabled(null)),

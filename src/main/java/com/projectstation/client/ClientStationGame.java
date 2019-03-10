@@ -20,6 +20,7 @@ package com.projectstation.client;
 
 import com.jevaengine.spacestation.IState;
 import com.jevaengine.spacestation.IStateContext;
+import com.jevaengine.spacestation.NullState;
 import com.projectstation.client.gamestates.ConnectionMenu;
 import io.github.jevaengine.IEngineThreadPool;
 import io.github.jevaengine.audio.IAudioClipFactory;
@@ -92,9 +93,10 @@ public final class ClientStationGame extends DefaultGame implements IStateContex
 		m_parallelWorldFactory = new ThreadPooledWorldFactory(worldFactory, threadPool);
 
 		String[] c = serverHost.split(":");
-		if (c.length != 2 || !c[1].matches("[0-9]+"))
+		if (c.length != 2 || !c[1].matches("[0-9]+")) {
 			m_logger.error("Invalid connection string.");
-		else {
+			m_state = new NullState();
+		} else {
 			m_state = new EntryState(c[0], Integer.valueOf(c[1]));
 			m_state.enter(this);
 		}
