@@ -105,7 +105,6 @@ public class ServerList extends JDialog {
     }
 
     private void connect(String serverName) {
-        System.out.println("Connecting to: " + serverName);
         connectHost = serverName;
         this.setVisible(false);
     }
