@@ -21,10 +21,7 @@ package com.projectstation.client.gamestates;
 import com.jevaengine.spacestation.IState;
 import com.jevaengine.spacestation.IStateContext;
 import com.jevaengine.spacestation.StationProjectionFactory;
-import com.jevaengine.spacestation.entity.IInteractableEntity;
 import com.jevaengine.spacestation.entity.character.SpaceCharacter;
-import com.jevaengine.spacestation.gamestates.MainMenu;
-import com.jevaengine.spacestation.gas.GasSimulationNetwork;
 import com.jevaengine.spacestation.ui.*;
 import com.jevaengine.spacestation.ui.HudFactory.Hud;
 import com.jevaengine.spacestation.ui.InventoryHudFactory.InventoryHud;
@@ -42,28 +39,19 @@ import com.projectstation.client.network.ui.ClientLoadoutHudFactory;
 import com.projectstation.network.command.server.ServerWorldVisit;
 import com.projectstation.network.command.world.CharacterInteractedWith;
 import com.projectstation.network.command.world.CharacterPerformedInteraction;
-import com.projectstation.network.command.world.SetEntityVelocityCommand;
 import com.projectstation.network.command.world.UseItemInHandsAtCommand;
-import io.github.jevaengine.audio.IAudioClipFactory;
 import io.github.jevaengine.graphics.*;
 import io.github.jevaengine.math.*;
-import io.github.jevaengine.rpg.entity.character.IMovementResolver;
 import io.github.jevaengine.rpg.entity.character.IRpgCharacter;
-import io.github.jevaengine.rpg.entity.character.IRpgCharacter.NullRpgCharacter;
 import io.github.jevaengine.rpg.item.IItem;
-import io.github.jevaengine.ui.IWindowFactory;
 import io.github.jevaengine.ui.IWindowFactory.WindowConstructionException;
 import io.github.jevaengine.util.Nullable;
-import io.github.jevaengine.world.Direction;
-import io.github.jevaengine.world.IParallelWorldFactory;
 import io.github.jevaengine.world.World;
 import io.github.jevaengine.world.entity.IEntity;
 import io.github.jevaengine.world.scene.ISceneBuffer;
 import io.github.jevaengine.world.scene.ISceneBufferFactory;
 import io.github.jevaengine.world.scene.TopologicalOrthographicProjectionSceneBufferFactory;
 import io.github.jevaengine.world.scene.camera.FollowCamera;
-import io.github.jevaengine.world.scene.model.IActionSceneModel;
-import io.github.jevaengine.world.scene.model.IImmutableSceneModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +82,7 @@ public class Playing implements IState {
 	private Hud m_hud;
 	private LoadoutHud m_loadoutHud;
 	private InventoryHud m_inventoryHud;
+	private CharacterStatusHudFactory.StatusHud m_statusHud;
 
 	private final String m_playerEntityName;
 	private final WorldClient m_client;
@@ -102,6 +91,8 @@ public class Playing implements IState {
 	private ChatHudFactory.ChatHud chatHud;
 	private final String m_host;
 	private final int m_port;
+
+	private Vector3F m_lastPlayerLocation = new Vector3F();
 
 	public Playing(String host, int port, WorldClient client, String playerEntityName, World world) {
 		m_world = world;
@@ -135,7 +126,7 @@ public class Playing implements IState {
 			ISceneBufferFactory sceneBufferFactory = new TopologicalOrthographicProjectionSceneBufferFactory(new StationProjectionFactory().create());
 			FollowCamera camera = new FollowCamera(sceneBufferFactory);
 
-			camera.addEffect(new NicknameEffect2());
+			camera.addEffect(new NicknameEffect());
 			camera.setZoom(CAMERA_ZOOM);
 
 			SpaceCharacter playerEntityBuffer = m_world.getEntities().getByName(SpaceCharacter.class, m_playerEntityName);
@@ -182,12 +173,12 @@ public class Playing implements IState {
 				}
 			});
 
-			CharacterStatusHudFactory.StatusHud hud = new CharacterStatusHudFactory(context.getWindowManager(), context.getWindowFactory()).create(m_player.getAttributes(), m_player.getStatusResolver());
-			int y = context.getWindowManager().getResolution().y / 2 - hud.getBounds().height;
-			hud.setMovable(false);
-			hud.setTopMost(true);
-			hud.setVisible(true);
-			hud.setLocation(new Vector2D(context.getWindowManager().getResolution().x - hud.getBounds().width - 20, y));
+			m_statusHud = new CharacterStatusHudFactory(context.getWindowManager(), context.getWindowFactory()).create(m_player.getAttributes(), m_player.getStatusResolver());
+			int y = context.getWindowManager().getResolution().y / 2 - m_statusHud.getBounds().height;
+			m_statusHud.setMovable(false);
+			m_statusHud.setTopMost(true);
+			m_statusHud.setVisible(true);
+			m_statusHud.setLocation(new Vector2D(context.getWindowManager().getResolution().x - m_statusHud.getBounds().width - 20, y));
 
 			chatHud = new ChatHudFactory(context.getWindowManager(), context.getWindowFactory()).create();
 			y = context.getWindowManager().getResolution().y - chatHud.getBounds().height - 20;
@@ -217,11 +208,22 @@ public class Playing implements IState {
 	public void leave() {
 		if (m_playingWindow != null) {
 			m_playingWindow.dispose();
+			chatHud.dispose();
+			m_inventoryHud.dispose();
+			m_loadoutHud.dispose();
+			m_hud.dispose();m_statusHud.dispose();
+
 		}
 	}
 
 	@Override
 	public void update(int deltaTime) {
+		//Our character isn't in the world anymore? Maybe they died.
+		if(m_player.getWorld() == null)
+			m_context.setState(new AwaitCharacterAssignment(m_host, m_port, m_client, m_world, m_lastPlayerLocation));
+		else
+			m_lastPlayerLocation = m_player.getBody().getLocation();
+
 		m_world.update(deltaTime);
 		m_client.update(deltaTime);
 
@@ -230,7 +232,7 @@ public class Playing implements IState {
 		}
 	}
 
-	private class NicknameEffect2 implements ISceneBuffer.ISceneBufferEffect {
+	private class NicknameEffect implements ISceneBuffer.ISceneBufferEffect {
 		@Override
 		public IRenderable getUnderlay(Vector2D translation, Rect2D bounds, Matrix3X3 projection) {
 			return new NullGraphic();

@@ -95,10 +95,9 @@ public class SynchronizeWithServer implements IState
 	public void update(int iDelta)
 	{
 		m_client.update(iDelta);
-		if(m_client.getWorld() != null && m_client.getPlayerEntity() != null &&
-				m_client.getWorld().getEntities().getByName(IRpgCharacter.class, m_client.getPlayerEntity()) != null)
+		if(m_client.getWorld() != null)
 		{
-			m_handler.done(m_client, m_client.getPlayerEntity(), m_client.getWorld());
+			m_handler.done(m_client, m_client.getWorld());
 		}
 
 		if(!m_client.isConnected()) {
@@ -110,7 +109,7 @@ public class SynchronizeWithServer implements IState
 
 	public interface ILoadingWorldHandler
 	{
-		void done(WorldClient client, String playerEntity, World world);
+		void done(WorldClient client, World world);
 	}
 	
 	public class LoadingBehaviourInjector extends WindowBehaviourInjector

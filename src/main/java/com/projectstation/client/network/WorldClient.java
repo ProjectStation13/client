@@ -264,7 +264,8 @@ public class WorldClient {
 
         @Override
         public void poll() {
-            pollRequests.add(entityNetworkAdapters.get(name));
+            if(entityNetworkAdapters.containsKey(name))
+                pollRequests.add(entityNetworkAdapters.get(name));
         }
 
         @Override

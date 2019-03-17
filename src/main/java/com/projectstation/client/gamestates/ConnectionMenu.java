@@ -118,8 +118,8 @@ public class ConnectionMenu implements IState
 
 	private class LoadingWorldHandler implements SynchronizeWithServer.ILoadingWorldHandler {
 		@Override
-		public void done(WorldClient client, String playerName, World world) {
-			m_context.setState(new Playing(m_host, m_port, client, playerName, world));
+		public void done(WorldClient client, World world) {
+			m_context.setState(new AwaitCharacterAssignment(m_host, m_port, client, world));
 		}
 	}
 }
