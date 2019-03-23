@@ -3,6 +3,8 @@ package com.projectstation.client.gamestates;
 import com.jevaengine.spacestation.IState;
 import com.jevaengine.spacestation.IStateContext;
 import com.jevaengine.spacestation.StationProjectionFactory;
+import com.jevaengine.spacestation.ui.selectclass.CharacterClassDescription;
+import com.jevaengine.spacestation.ui.selectclass.CharacterClassSelectWindowFactory;
 import com.projectstation.client.network.WorldClient;
 import com.projectstation.client.network.ui.ChatHudFactory;
 import com.projectstation.client.network.ui.observing.ObservingWindowFactory;
@@ -34,6 +36,7 @@ public class AwaitCharacterAssignment implements IState
     private ObservingWindowFactory.ObservingWindow m_observingWindow;
     private final Vector3F m_requestedObserveLocation;
     private ChatHudFactory.ChatHud m_chatHud;
+    private CharacterClassSelectWindowFactory.CharacterSelectClassWindow m_classSelect;
 
     public AwaitCharacterAssignment(String host, int port, WorldClient client, World world) {
         this(host, port, client, world, new Vector3F());
@@ -46,6 +49,27 @@ public class AwaitCharacterAssignment implements IState
         m_host = host;
         m_port = port;
         m_client = client;
+    }
+
+    private void createSelectClass() {
+        if(m_classSelect != null)
+            return;
+
+        try {
+            m_classSelect = new CharacterClassSelectWindowFactory(m_context.getWindowManager(), m_context.getWindowFactory()).create(m_context.getEntityFactory(), m_client.getAvailableRoles());
+            m_classSelect.setTopMost(true);
+            m_classSelect.setVisible(true);
+
+            m_classSelect.getObservers().add(new CharacterClassSelectWindowFactory.ICharacterClassSelectObserver() {
+                @Override
+                public void selectedClass(CharacterClassDescription desc) {
+                    m_client.selectRole(desc);
+                    m_classSelect.setVisible(false);
+                }
+            });
+        } catch (IWindowFactory.WindowConstructionException e) {
+            m_logger.error("Error creating class select window.", e);
+        }
     }
 
     private Vector3F getObserveStart() {
@@ -116,6 +140,10 @@ public class AwaitCharacterAssignment implements IState
             m_observingWindow.dispose();
             m_chatHud.dispose();
         }
+
+        if(m_classSelect != null) {
+            m_classSelect.dispose();
+        }
     }
 
     @Override
@@ -126,6 +154,13 @@ public class AwaitCharacterAssignment implements IState
                 m_client.getWorld().getEntities().getByName(IRpgCharacter.class, m_client.getPlayerEntity()) != null)
         {
             m_context.setState(new Playing(m_host, m_port, m_client, m_client.getPlayerEntity(), m_world));
+        }
+
+        if(m_client.isAwaitingRoleSelect())
+            createSelectClass();
+        else if(m_classSelect != null) {
+            m_classSelect.dispose();
+            m_classSelect = null;
         }
 
         if(!m_client.isConnected()) {

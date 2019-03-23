@@ -1,8 +1,10 @@
 package com.projectstation.client.network;
 
+import com.jevaengine.spacestation.ui.selectclass.CharacterClassDescription;
 import com.projectstation.client.ClientStationEntityFactory;
 import com.projectstation.client.network.entity.ClientNetworkEntityMappings;
 import com.projectstation.network.command.server.NewChatMessage;
+import com.projectstation.network.command.server.ServerSelectRole;
 import com.projectstation.network.entity.IClientEntityNetworkAdapter;
 import com.projectstation.network.*;
 import com.projectstation.network.command.server.ServerGetTime;
@@ -66,6 +68,9 @@ public class WorldClient {
     private final WorldClientHandler clientHandler = new WorldClientHandler();
     private final VisitableWorldClientHandler visitable = new VisitableWorldClientHandler();
 
+    private List<CharacterClassDescription> availableRoles = new ArrayList<>();
+    private boolean isAwaitingRoleSelect = false;
+
     private long serverTimeDelta = 0;
 
     private String playerEntity;
@@ -124,6 +129,19 @@ public class WorldClient {
         clientHandler.flush();
     }
 
+    public CharacterClassDescription[] getAvailableRoles() {
+        return availableRoles.toArray(new CharacterClassDescription[0]);
+    }
+
+    public boolean isAwaitingRoleSelect() {
+        return isAwaitingRoleSelect;
+    }
+
+    public void selectRole(CharacterClassDescription role) {
+        clientHandler.send(new ServerSelectRole(role));
+        clientHandler.flush();
+        isAwaitingRoleSelect = false;
+    }
 
     public Map<String, String> getNicknameMapping() {
         return Collections.unmodifiableMap(nicknameMapping);
@@ -304,6 +322,12 @@ public class WorldClient {
                 throw new RuntimeException("Attempted to access client world when it is not present.");
 
             return WorldClient.this.world;
+        }
+
+        @Override
+        public void requestRoleSelect(List<CharacterClassDescription> available) {
+            availableRoles = new ArrayList<>(available);
+            isAwaitingRoleSelect = true;
         }
 
         @Override
