@@ -39,6 +39,8 @@ public class ServerList extends JDialog {
     private String connectHost = null;
 
     public ServerList(String masterHost, int masterPort) {
+        super(null, java.awt.Dialog.ModalityType.TOOLKIT_MODAL);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setContentPane(contentPane);
         setModal(true);
         setTitle("Project Station Server List");
